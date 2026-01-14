@@ -16,6 +16,8 @@ import { mockDoctors } from "@/lib/mock-data"
 import type { Doctor, TimeSlot } from "@/lib/types"
 import { Clock, CalendarIcon, CheckCircle, Loader2, Timer } from "lucide-react"
 import { format, addDays, isBefore, startOfDay } from "date-fns"
+import { useAuth } from "@/components/auth/use-auth"
+import AuthDialog from "@/components/auth/auth-dialog"
 
 type BookingStep = "select-doctor" | "select-slot" | "confirm"
 
@@ -46,8 +48,10 @@ export function BookingSection() {
     addToGoogleCalendar: false,
   })
 
-  // Generate a patient ID (in production, this would come from auth)
-  const [patientId] = useState(() => `patient-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`)
+  // Get user from auth context; use signed-in user id or generate guest id
+  const { user } = useAuth()
+  const [guestPatientId] = useState(() => `patient-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`)
+  const patientId = user?.id ?? guestPatientId
 
   // Fetch available slots when doctor or date changes
   useEffect(() => {
@@ -242,8 +246,39 @@ export function BookingSection() {
     return `${mins}:${secs.toString().padStart(2, "0")}`
   }
 
+  // If user is not signed in, show sign-in CTA
+  if (!user) {
+    return (
+      <section id="booking" className="bg-muted/30 py-16 lg:py-24">
+        <div className="container mx-auto px-4">
+          <div className="mx-auto max-w-2xl text-center space-y-4 mb-12">
+            <div className="inline-flex items-center rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5">
+              <span className="text-sm font-medium text-primary">Book Your Visit</span>
+            </div>
+            <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl text-balance">Schedule an Appointment</h2>
+            <p className="text-lg text-muted-foreground">Sign in or create an account to view available time slots and book an appointment.</p>
+          </div>
+
+          <div className="mx-auto max-w-2xl">
+            <Card>
+              <CardHeader>
+                <CardTitle>Sign in to book</CardTitle>
+                <CardDescription>Sign in or create an account to view time slots and book appointments.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-center py-6">
+                  <AuthDialog />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+    )
+  }
+
   return (
-    <section id="booking" className="bg-muted/30 py-20 lg:py-28">
+    <section id="booking" className="bg-muted/30 py-16 lg:py-24">
       <div className="container mx-auto px-4">
         <div className="mx-auto max-w-2xl text-center space-y-4 mb-12">
           <div className="inline-flex items-center rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5">
@@ -482,7 +517,7 @@ export function BookingSection() {
                       <Label htmlFor="patientName">Full Name *</Label>
                       <Input
                         id="patientName"
-                        placeholder="John Doe"
+                        placeholder="man"
                         value={formData.patientName}
                         onChange={(e) => setFormData((prev) => ({ ...prev, patientName: e.target.value }))}
                         required
@@ -493,7 +528,7 @@ export function BookingSection() {
                       <Input
                         id="patientEmail"
                         type="email"
-                        placeholder="john@example.com"
+                        placeholder="man@example.com"
                         value={formData.patientEmail}
                         onChange={(e) => setFormData((prev) => ({ ...prev, patientEmail: e.target.value }))}
                         required
@@ -506,7 +541,7 @@ export function BookingSection() {
                     <Input
                       id="patientPhone"
                       type="tel"
-                      placeholder="+1 (555) 123-4567"
+                      placeholder="+941123456789"
                       value={formData.patientPhone}
                       onChange={(e) => setFormData((prev) => ({ ...prev, patientPhone: e.target.value }))}
                       required

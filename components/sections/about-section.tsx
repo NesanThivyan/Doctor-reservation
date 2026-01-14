@@ -30,7 +30,7 @@ const highlights = [
 
 export function AboutSection() {
   return (
-    <section id="about" className="bg-muted/30 py-20 lg:py-28">
+    <section id="about" className="bg-muted/30 py-16 lg:py-24">
       <div className="container mx-auto px-4">
         <div className="grid items-center gap-12 lg:grid-cols-2">
           {/* Content */}

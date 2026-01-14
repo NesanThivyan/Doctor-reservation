@@ -36,12 +36,12 @@ export function ContactSection() {
     {
       icon: MapPin,
       title: "Visit Us",
-      details: ["123 Medical Center Drive", "Healthcare City, HC 12345"],
+      details: ["123  Medi-Hospital", "Wellawathai, Colombo-5"],
     },
     {
       icon: Phone,
       title: "Call Us",
-      details: ["+1 (555) 123-4567", "+1 (555) 987-6543"],
+      details: ["+9477682345", "+9411234567"],
     },
     {
       icon: Mail,
@@ -56,7 +56,7 @@ export function ContactSection() {
   ]
 
   return (
-    <section id="contact" className="bg-background py-20 lg:py-28">
+    <section id="contact" className="bg-background py-16 lg:py-24">
       <div className="container mx-auto px-4">
         <div className="mx-auto max-w-2xl text-center space-y-4 mb-12">
           <div className="inline-flex items-center rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5">

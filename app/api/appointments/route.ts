@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
         client_id: GOOGLE_CLIENT_ID,
         redirect_uri: GOOGLE_REDIRECT_URI,
         response_type: "code",
-        scope: "https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/userinfo.email",
+        scope: "https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile",
         access_type: "offline",
         prompt: "consent",
         state: Buffer.from(state).toString("base64"),

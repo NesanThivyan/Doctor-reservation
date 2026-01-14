@@ -8,7 +8,7 @@ export async function GET() {
     return NextResponse.json({ error: "Google OAuth not configured" }, { status: 500 })
   }
 
-  const scope = "https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/userinfo.email"
+  const scope = "https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile"
   const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
     new URLSearchParams({
       client_id: GOOGLE_CLIENT_ID,

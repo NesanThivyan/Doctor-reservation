@@ -1,175 +1,132 @@
 "use client"
 
-import React, { useState } from "react"
-import { Dialog, DialogTrigger, DialogContent, DialogTitle, DialogHeader, DialogFooter } from "@/components/ui/dialog"
+import { useState } from "react"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { useAuth } from "@/components/auth/use-auth"
+import { toast } from "sonner"
+import { Loader2 } from "lucide-react"
 
 export function AuthDialog() {
-  const [mode, setMode] = useState<"signin" | "signup">("signin")
-  const [signinEmail, setSigninEmail] = useState("")
-  const [signinPassword, setSigninPassword] = useState("")
-  const [signupName, setSignupName] = useState("")
-  const [signupEmail, setSignupEmail] = useState("")
-  const [signupPassword, setSignupPassword] = useState("")
-  const [loading, setLoading] = useState(false)
-  const [message, setMessage] = useState<string | null>(null)
+  const [isOpen, setIsOpen] = useState(false)
+  const [isSignUp, setIsSignUp] = useState(false)
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [name, setName] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
+  const { signIn, signUp } = useAuth()
 
-  async function onSignIn() {
-    setLoading(true)
-    setMessage(null)
+  const handleSignIn = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsLoading(true)
+
     try {
-      const res = await fetch("/api/auth/signin", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: signinEmail, password: signinPassword }),
-      })
-      const data = await res.json()
-      if (res.ok) {
-        setMessage("Signed in successfully")
-        // You may want to store tokens or update app state here
-      } else {
-        setMessage(data?.message || "Sign in failed")
-      }
-    } catch (err) {
-      setMessage("Sign in failed")
+      await signIn(email, password)
+      toast.success("Signed in successfully!")
+      setIsOpen(false)
+      setEmail("")
+      setPassword("")
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Sign in failed")
     } finally {
-      setLoading(false)
+      setIsLoading(false)
     }
   }
 
-  async function onSignUp() {
-    setLoading(true)
-    setMessage(null)
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsLoading(true)
+
     try {
-      const res = await fetch("/api/auth/signup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: signupName, email: signupEmail, password: signupPassword }),
-      })
-      const data = await res.json()
-      if (res.ok) {
-        setMessage("Account created successfully. You can now sign in.")
-        setMode("signin")
-        setSignupName("")
-        setSignupEmail("")
-        setSignupPassword("")
-      } else {
-        setMessage(data?.message || "Sign up failed")
-      }
-    } catch (err) {
-      setMessage("Sign up failed")
+      await signUp(email, password, name)
+      toast.success("Account created successfully!")
+      setIsOpen(false)
+      setEmail("")
+      setPassword("")
+      setName("")
+      setIsSignUp(false)
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Sign up failed")
     } finally {
-      setLoading(false)
+      setIsLoading(false)
     }
   }
 
   return (
-    <Dialog>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="default">Sign In</Button>
+        <Button variant="outline">Sign In</Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>{mode === "signin" ? "Sign in" : "Create account"}</DialogTitle>
+          <DialogTitle>{isSignUp ? "Create Account" : "Sign In"}</DialogTitle>
+          <DialogDescription>
+            {isSignUp ? "Create a new account to book appointments" : "Sign in to your account to book appointments"}
+          </DialogDescription>
         </DialogHeader>
 
-        {message && (
-          <p className="text-sm text-muted-foreground mb-2">{message}</p>
-        )}
-
-        {mode === "signin" ? (
-          <form onSubmit={(e) => { e.preventDefault(); onSignIn(); }} className="grid gap-4">
-            <div>
-              <Label htmlFor="signin-email">Email</Label>
+        <form onSubmit={isSignUp ? handleSignUp : handleSignIn} className="space-y-4">
+          {isSignUp && (
+            <div className="space-y-2">
+              <Label htmlFor="name">Full Name</Label>
               <Input
-                id="signin-email"
-                type="email"
-                placeholder="you@domain.com"
-                value={signinEmail}
-                onChange={(e) => setSigninEmail(e.target.value)}
+                id="name"
+                placeholder="John Doe"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
                 required
               />
             </div>
+          )}
 
-            <div>
-              <Label htmlFor="signin-password">Password</Label>
-              <Input
-                id="signin-password"
-                type="password"
-                placeholder="Your password"
-                value={signinPassword}
-                onChange={(e) => setSigninPassword(e.target.value)}
-                required
-              />
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
 
-            <div className="flex items-center justify-between gap-2">
-              <Button type="submit" disabled={loading}>{loading ? "Signing in..." : "Sign in"}</Button>
-              <Button variant="outline" asChild>
-                <a href="/api/auth/google">Sign in with Google</a>
-              </Button>
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="password">Password</Label>
+            <Input
+              id="password"
+              type="password"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </div>
 
-            <div className="text-sm text-muted-foreground">
-              Don't have an account? <button type="button" className="text-primary underline" onClick={() => setMode("signup")}>Sign up</button>
-            </div>
-          </form>
-        ) : (
-          <form onSubmit={(e) => { e.preventDefault(); onSignUp(); }} className="grid gap-4">
-            <div>
-              <Label htmlFor="signup-name">Name</Label>
-              <Input
-                id="signup-name"
-                type="text"
-                placeholder="Full name"
-                value={signupName}
-                onChange={(e) => setSignupName(e.target.value)}
-                required
-              />
-            </div>
+          <Button type="submit" className="w-full" disabled={isLoading}>
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                {isSignUp ? "Creating account..." : "Signing in..."}
+              </>
+            ) : isSignUp ? (
+              "Create Account"
+            ) : (
+              "Sign In"
+            )}
+          </Button>
+        </form>
 
-            <div>
-              <Label htmlFor="signup-email">Email</Label>
-              <Input
-                id="signup-email"
-                type="email"
-                placeholder="you@domain.com"
-                value={signupEmail}
-                onChange={(e) => setSignupEmail(e.target.value)}
-                required
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="signup-password">Password</Label>
-              <Input
-                id="signup-password"
-                type="password"
-                placeholder="Create a password"
-                value={signupPassword}
-                onChange={(e) => setSignupPassword(e.target.value)}
-                required
-              />
-            </div>
-
-            <div className="flex items-center justify-between gap-2">
-              <Button type="submit" disabled={loading}>{loading ? "Creating..." : "Create account"}</Button>
-              <Button variant="outline" asChild>
-                <a href="/api/auth/google">Sign up with Google</a>
-              </Button>
-            </div>
-
-            <div className="text-sm text-muted-foreground">
-              Already have an account? <button type="button" className="text-primary underline" onClick={() => setMode("signin")}>Sign in</button>
-            </div>
-          </form>
-        )}
-
-        <DialogFooter>
-          <Button variant="ghost" onClick={() => { setMessage(null); setMode("signin"); setSigninEmail(""); setSigninPassword(""); setSignupName(""); setSignupEmail(""); setSignupPassword(""); }}>Close</Button>
-        </DialogFooter>
+        <div className="text-center text-sm">
+          <button
+            onClick={() => setIsSignUp(!isSignUp)}
+            className="text-primary hover:underline"
+          >
+            {isSignUp ? "Already have an account? Sign in" : "Don't have an account? Sign up"}
+          </button>
+        </div>
       </DialogContent>
     </Dialog>
   )

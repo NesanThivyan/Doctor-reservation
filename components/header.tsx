@@ -4,7 +4,8 @@ import { useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { Menu, Calendar, Stethoscope } from "lucide-react"
+import { Menu, Calendar, Stethoscope, LogOut } from "lucide-react"
+import { useAuth } from "@/components/auth/use-auth"
 import AuthDialog from "@/components/auth/auth-dialog"
 
 const navLinks = [
@@ -17,6 +18,7 @@ const navLinks = [
 
 export function Header() {
   const [isOpen, setIsOpen] = useState(false)
+  const { user, signOut } = useAuth()
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -42,7 +44,17 @@ export function Header() {
         </nav>
 
         <div className="hidden items-center gap-4 md:flex">
-          <AuthDialog />
+          {user ? (
+            <>
+              <span className="text-sm text-muted-foreground">Hi, {user.name}</span>
+              <Button variant="outline" size="sm" onClick={signOut}>
+                <LogOut className="mr-2 h-4 w-4" />
+                Sign Out
+              </Button>
+            </>
+          ) : (
+            <AuthDialog />
+          )}
           <Button asChild>
             <Link href="#booking" className="gap-2">
               <Calendar className="h-4 w-4" />
@@ -79,15 +91,28 @@ export function Header() {
                   </Link>
                 ))}
               </nav>
-              <div className="flex flex-col gap-2">
-                <AuthDialog />
-                <Button asChild className="mt-2">
-                  <Link href="#booking" onClick={() => setIsOpen(false)} className="gap-2">
-                    <Calendar className="h-4 w-4" />
-                    Book Appointment
-                  </Link>
-                </Button>
-              </div>
+              {user ? (
+                <div className="flex flex-col gap-2 border-t border-border pt-4">
+                  <span className="text-sm font-medium">Hi, {user.name}</span>
+                  <Button variant="outline" className="w-full" onClick={() => {
+                    signOut()
+                    setIsOpen(false)
+                  }}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Sign Out
+                  </Button>
+                </div>
+              ) : (
+                <div className="border-t border-border pt-4">
+                  <AuthDialog />
+                </div>
+              )}
+              <Button asChild className="mt-4">
+                <Link href="#booking" onClick={() => setIsOpen(false)} className="gap-2">
+                  <Calendar className="h-4 w-4" />
+                  Book Appointment
+                </Link>
+              </Button>
             </div>
           </SheetContent>
         </Sheet>

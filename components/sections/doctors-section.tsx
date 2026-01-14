@@ -9,7 +9,7 @@ import Link from "next/link"
 
 export function DoctorsSection() {
   return (
-    <section id="doctors" className="bg-background py-20 lg:py-28">
+    <section id="doctors" className="bg-background py-16 lg:py-24">
       <div className="container mx-auto px-4">
         <div className="mx-auto max-w-2xl text-center space-y-4 mb-16">
           <div className="inline-flex items-center rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5">
@@ -58,7 +58,7 @@ export function DoctorsSection() {
                     </div>
                     <div className="flex items-center gap-1">
                       <DollarSign className="h-4 w-4" />
-                      <span>${doctor.consultationFee}</span>
+                      <span>RS{doctor.consultationFee}</span>
                     </div>
                   </div>
                   <p className="text-sm text-muted-foreground line-clamp-2">{doctor.bio}</p>

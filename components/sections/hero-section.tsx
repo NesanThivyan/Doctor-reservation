@@ -4,7 +4,7 @@ import { Calendar, Shield, Clock, Award } from "lucide-react"
 
 export function HeroSection() {
   return (
-    <section className="relative overflow-hidden bg-background py-20 lg:py-32">
+    <section className="relative overflow-hidden bg-background py-16 lg:py-24">
       {/* Background Pattern */}
       <div className="absolute inset-0 -z-10">
         <div className="absolute top-0 right-0 h-96 w-96 rounded-full bg-primary/5 blur-3xl" />
@@ -13,7 +13,7 @@ export function HeroSection() {
 
       <div className="container mx-auto px-4">
         <div className="grid items-center gap-12 lg:grid-cols-2">
-          <div className="space-y-8">
+          <div className="space-y-6">
             <div className="inline-flex items-center rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5">
               <span className="text-sm font-medium text-primary">Trusted by 10,000+ patients</span>
             </div>
