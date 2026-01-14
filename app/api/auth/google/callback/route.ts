@@ -1,6 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { getAppointment, updateAppointmentGoogleEvent, updatePatientGoogleTokens, getDoctorById } from "@/lib/db-models"
 import { mockDoctors } from "@/lib/mock-data"
+import { connectToDatabase, COLLECTIONS } from "@/lib/mongodb"
+import { randomBytes, scryptSync } from "crypto"
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET
@@ -15,17 +17,25 @@ export async function GET(request: NextRequest) {
 
   // Handle OAuth errors
   if (error) {
-    return NextResponse.redirect(new URL("/?booking=success&calendar=error", request.url))
+    return NextResponse.redirect(new URL(stateParam ? "/?booking=success&calendar=error" : "/?auth=error", request.url))
   }
 
-  if (!code || !stateParam) {
-    return NextResponse.redirect(new URL("/?booking=error", request.url))
+  if (!code) {
+    return NextResponse.redirect(new URL(stateParam ? "/?booking=error" : "/?auth=error", request.url))
   }
 
   try {
-    // Decode state
-    const state = JSON.parse(Buffer.from(stateParam, "base64").toString())
-    const { appointmentId, patientId } = state
+    let isBooking = false
+    let appointmentId = null
+    let patientId = null
+
+    if (stateParam) {
+      // Decode state
+      const state = JSON.parse(Buffer.from(stateParam, "base64").toString())
+      appointmentId = state.appointmentId
+      patientId = state.patientId
+      isBooking = true
+    }
 
     if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
       console.error("Google OAuth credentials not configured")
@@ -49,11 +59,54 @@ export async function GET(request: NextRequest) {
 
     if (!tokens.access_token) {
       console.error("Failed to get access token:", tokens)
-      return NextResponse.redirect(new URL("/?booking=success&calendar=error", request.url))
+      return NextResponse.redirect(new URL(isBooking ? "/?booking=success&calendar=error" : "/?auth=error", request.url))
     }
 
-    if (tokens.refresh_token) {
-      await updatePatientGoogleTokens(patientId, tokens.access_token, tokens.refresh_token)
+    if (isBooking) {
+      if (tokens.refresh_token) {
+        await updatePatientGoogleTokens(patientId, tokens.access_token, tokens.refresh_token)
+      }
+    } else {
+      // Handle auth
+      const userInfoResponse = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
+        headers: { Authorization: `Bearer ${tokens.access_token}` },
+      })
+      const userInfo = await userInfoResponse.json()
+
+      if (!userInfo.email) {
+        return NextResponse.redirect(new URL("/?auth=error", request.url))
+      }
+
+      const { db } = await connectToDatabase()
+      let patient = await db.collection(COLLECTIONS.PATIENTS).findOne({ email: userInfo.email })
+
+      if (!patient) {
+        // Sign up
+        const salt = randomBytes(16).toString("hex")
+        const hashed = scryptSync("", salt, 64).toString("hex") // Empty password for Google users
+        const id = `patient-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
+        const now = new Date()
+
+        patient = {
+          _id: id,
+          name: userInfo.name,
+          email: userInfo.email,
+          passwordHash: hashed,
+          passwordSalt: salt,
+          googleCalendarConnected: true,
+          createdAt: now,
+          updatedAt: now,
+        }
+
+        await db.collection(COLLECTIONS.PATIENTS).insertOne(patient as any)
+      }
+
+      // Update tokens
+      if (tokens.refresh_token) {
+        await updatePatientGoogleTokens(patient._id.toString(), tokens.access_token, tokens.refresh_token)
+      }
+
+      return NextResponse.redirect(new URL("/?auth=success", request.url))
     }
 
     const appointment = await getAppointment(appointmentId)

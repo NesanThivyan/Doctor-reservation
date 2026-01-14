@@ -5,6 +5,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Menu, Calendar, Stethoscope } from "lucide-react"
+import AuthDialog from "@/components/auth/auth-dialog"
 
 const navLinks = [
   { href: "/", label: "Home" },
@@ -41,6 +42,7 @@ export function Header() {
         </nav>
 
         <div className="hidden items-center gap-4 md:flex">
+          <AuthDialog />
           <Button asChild>
             <Link href="#booking" className="gap-2">
               <Calendar className="h-4 w-4" />
@@ -77,12 +79,15 @@ export function Header() {
                   </Link>
                 ))}
               </nav>
-              <Button asChild className="mt-4">
-                <Link href="#booking" onClick={() => setIsOpen(false)} className="gap-2">
-                  <Calendar className="h-4 w-4" />
-                  Book Appointment
-                </Link>
-              </Button>
+              <div className="flex flex-col gap-2">
+                <AuthDialog />
+                <Button asChild className="mt-2">
+                  <Link href="#booking" onClick={() => setIsOpen(false)} className="gap-2">
+                    <Calendar className="h-4 w-4" />
+                    Book Appointment
+                  </Link>
+                </Button>
+              </div>
             </div>
           </SheetContent>
         </Sheet>
