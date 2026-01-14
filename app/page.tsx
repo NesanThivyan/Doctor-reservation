@@ -4,6 +4,7 @@ import { HeroSection } from "@/components/sections/hero-section"
 import { AboutSection } from "@/components/sections/about-section"
 import { DoctorsSection } from "@/components/sections/doctors-section"
 import { BookingSection } from "@/components/sections/booking-section"
+import { BookingsSection } from "@/components/sections/bookings-section"
 import { ContactSection } from "@/components/sections/contact-section"
 
 export default function HomePage() {
@@ -15,6 +16,7 @@ export default function HomePage() {
         <AboutSection />
         <DoctorsSection />
         <BookingSection />
+        <BookingsSection />
         <ContactSection />
       </main>
       <Footer />

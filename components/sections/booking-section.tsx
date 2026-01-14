@@ -19,12 +19,21 @@ import { format, addDays, isBefore, startOfDay } from "date-fns"
 import { useAuth } from "@/components/auth/use-auth"
 import AuthDialog from "@/components/auth/auth-dialog"
 
-type BookingStep = "select-doctor" | "select-slot" | "confirm"
+type BookingStep = "select-doctor" | "select-slot" | "confirm" | "success"
 
 interface HoldInfo {
   holdId: string
   expiresAt: Date
   slot: TimeSlot
+}
+
+interface SuccessAppointment {
+  id: string
+  date: string
+  startTime: string
+  endTime: string
+  reason: string
+  doctor: any
 }
 
 export function BookingSection() {
@@ -38,6 +47,7 @@ export function BookingSection() {
   const [isLoading, setIsLoading] = useState(false)
   const [isHolding, setIsHolding] = useState(false)
   const [isConfirming, setIsConfirming] = useState(false)
+  const [successAppointment, setSuccessAppointment] = useState<SuccessAppointment | null>(null)
 
   // Form data
   const [formData, setFormData] = useState({
@@ -202,14 +212,26 @@ export function BookingSection() {
       if (data.success) {
         toast.success("Appointment booked successfully!")
 
+        // Store the appointment details for success screen
+        setSuccessAppointment({
+          id: data.data.appointment.id,
+          date: data.data.appointment.date,
+          startTime: data.data.appointment.startTime,
+          endTime: data.data.appointment.endTime,
+          reason: data.data.appointment.reason,
+          doctor: data.data.doctor,
+        })
+
+        setStep("success")
+
         // If Google Calendar integration requested, redirect to OAuth
         if (formData.addToGoogleCalendar && data.data.googleAuthUrl) {
-          window.location.href = data.data.googleAuthUrl
+          // Delay redirect to show success screen briefly
+          setTimeout(() => {
+            window.location.href = data.data.googleAuthUrl
+          }, 2000)
           return
         }
-
-        // Reset form
-        resetBooking()
       } else {
         toast.error(data.error || "Failed to book appointment")
         if (data.error?.includes("expired") || data.error?.includes("invalid")) {
@@ -231,6 +253,7 @@ export function BookingSection() {
     setSelectedDoctor(null)
     setSelectedSlot(null)
     setHoldInfo(null)
+    setSuccessAppointment(null)
     setFormData({
       patientName: "",
       patientEmail: "",
@@ -244,6 +267,73 @@ export function BookingSection() {
     const mins = Math.floor(seconds / 60)
     const secs = seconds % 60
     return `${mins}:${secs.toString().padStart(2, "0")}`
+  }
+
+  // Success screen after booking
+  if (step === "success" && successAppointment) {
+    return (
+      <section id="booking" className="bg-muted/30 py-16 lg:py-24">
+        <div className="container mx-auto px-4">
+          <div className="mx-auto max-w-2xl">
+            <Card className="border-green-200 bg-green-50/50">
+              <CardContent className="p-8 text-center">
+                <div className="mb-6 flex justify-center">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
+                    <CheckCircle className="h-8 w-8 text-green-600" />
+                  </div>
+                </div>
+
+                <h2 className="text-3xl font-bold text-foreground mb-2">Booking Confirmed!</h2>
+                <p className="text-lg text-muted-foreground mb-8">
+                  Your appointment has been successfully booked.
+                </p>
+
+                {/* Appointment Summary */}
+                <div className="rounded-lg bg-white p-6 mb-6 text-left border border-border">
+                  <h3 className="font-semibold text-foreground mb-4">Appointment Summary</h3>
+                  <div className="space-y-3 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Doctor:</span>
+                      <span className="font-medium text-foreground">{successAppointment.doctor?.name}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Specialization:</span>
+                      <span className="text-foreground">{successAppointment.doctor?.specialization}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Date & Time:</span>
+                      <span className="text-foreground">
+                        {format(new Date(successAppointment.date), "MMM d, yyyy")} at{" "}
+                        {successAppointment.startTime}
+                      </span>
+                    </div>
+                    {successAppointment.reason && (
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Reason:</span>
+                        <span className="text-foreground">{successAppointment.reason}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <p className="text-sm text-muted-foreground mb-6">
+                  A confirmation email has been sent to your email address. You can view all your bookings in the "My Bookings" section.
+                </p>
+
+                <div className="flex gap-4 justify-center">
+                  <Button variant="outline" onClick={() => resetBooking()}>
+                    Book Another Appointment
+                  </Button>
+                  <Button asChild>
+                    <a href="#bookings">View My Bookings</a>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+    )
   }
 
   // If user is not signed in, show sign-in CTA
